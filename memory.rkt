@@ -21,8 +21,6 @@
   (let ([self (torv self)] [other (fromrv other)]) (rv (rv-seg self) (+ (rv-off self) other))))
 
 (define (rvsub self other)
-  (tokamak:typed self rv? integer?)
-  (tokamak:typed other rv? integer?)
   (cond
     [(union? other) (for/all ([v other #:exhaustive]) (rvsub self v))]
     [else
@@ -38,13 +36,9 @@
   (let ([self (torv self)] [other (fromrv other)]) (rv (rv-seg self) (modulo (rv-off self) other))))
 
 (define (rveq self other)
-  (tokamak:typed self rv?)
-  (tokamak:typed other rv?)
   (&& (equal? (rv-seg self) (rv-seg other)) (equal? (rv-off self) (rv-off other))))
 
 (define (rvlt self other)
-  (tokamak:typed self rv?)
-  (tokamak:typed other rv? integer?)
   (cond
     [(integer? other) #f]
     [else ; rv
@@ -218,9 +212,6 @@
   (vector-set! p ind (make-default-segment #:vec (equal? ind 1))))
 
 (define (verify-same-value addr current value)
-  (tokamak:typed addr rv? integer?)
-  (tokamak:typed current rv? integer?)
-  (tokamak:typed value rv? integer?)
   (when (not (equal? current value))
     (tokamak:error "inconsistency memory error, addr: ~a, current: ~a, value: ~a."
                    addr
@@ -232,7 +223,6 @@
 
 (define (memory-set! p addr value)
   (tokamak:log "memory set addr=~a, value=~a" addr value)
-  (tokamak:typed p memory?)
   (map (curryr apply (list addr value)) (memory-constraint-checks p))
   (when (&& (rv? addr) (< (rv-off addr) 0))
     (tokamak:error "offset of rv must be nonnegative, got: ~a." (rv-off addr)))
@@ -242,15 +232,12 @@
   (verify-same-value addr current value))
 
 (define (relocate-value value)
-  (tokamak:typed value rv? integer? null?)
   (cond
     [(not (rv? value)) value]
     [(>= (rv-seg value) 0) value]
     [else value]))
 
 (define (add-segment p #:size [size null])
-  (tokamak:typed p memory?)
-  (tokamak:typed size integer? null?)
   (let ([segment-index (memory-nsegs p)] [data (memory-data p)])
     (set-memory-nsegs! p (+ 1 segment-index))
     (when (not (memory-frozen p))
@@ -258,9 +245,6 @@
     (rv segment-index 0)))
 
 (define (load-data p ptr data)
-  (tokamak:typed p memory?)
-  (tokamak:typed ptr rv? integer?)
-  (tokamak:typed data list?)
   (let ([n (length data)])
     (for ([i (range n)])
       (memory-set! p (rvadd ptr i) (list-ref data i))))
